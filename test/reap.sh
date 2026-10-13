@@ -2,7 +2,7 @@
 # Checks that a stop ends what the stopped process left running: a child in its
 # own process session that ignores SIGTERM, like a stuck background tool shell.
 set -uo pipefail
-crew="$(dirname "$0")/../bin/claude-crew"
+crew="$(dirname "$0")/../bin/claude-host"
 source <(sed -n '/^proc_start() {/,/^}/p; /^descendants() {/,/^}/p; /^reap_survivors() {/,/^}/p' "$crew")
 count() { local p n=0; for p in $(pgrep -x sleep); do [ "$(tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null)" = "sleep 30171 " ] && n=$((n + 1)); done; echo "$n"; }
 

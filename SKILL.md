@@ -1,5 +1,5 @@
 ---
-name: claude-crew
+name: claude-host
 description: >-
   Manage the Claude Code sessions on this host, each a tmux session named
   Claude_<first 8 characters of its conversation id>: start a new one, resume a stopped conversation,
@@ -7,8 +7,8 @@ description: >-
   replaces, unlike Claude Code's /clear), delete a conversation for good,
   change a session's model or effort, or type keystrokes into a session's input
   box. Load it whenever the user mentions the claudes, the crew, a session, or
-  names another session at all, even without saying "claude-crew" and even when
-  the request looks like ordinary shell work. Triggers: crew, claude-crew,
+  names another session at all, even without saying "claude-host" and even when
+  the request looks like ordinary shell work. Triggers: crew, claude-host,
   restart the claudes, new claude session, resume Click Clack, stop Pensi,
   clear context, /clear, delete a conversation, what is running, change
   Trading Research 2 to sonnet, bump effort to xhigh, update claude code,
@@ -18,23 +18,23 @@ description: >-
   including your own.
 
   To reach a peer, SendMessage carries the sender's context and identity and
-  `claude-crew prompt` carries neither. When the user names the mechanism
+  `claude-host prompt` carries neither. When the user names the mechanism
   ("prompt this to X"), use it even if a reply is wanted. Otherwise choose by
   whether the peer must reply.
 
-  Call it as `~/.claude/skills/claude-crew/bin/claude-crew` when it is not on
+  Call it as `~/.claude/skills/claude-host/bin/claude-host` when it is not on
   PATH: a tool-call shell does not inherit the login shell's PATH.
 ---
 
-# claude-crew
+# claude-host
 
-`claude-crew` runs each Claude Code conversation on this host as its own tmux
+`claude-host` runs each Claude Code conversation on this host as its own tmux
 session, and starts, stops, restarts and clears them.
 
-Run it as `claude-crew <command>`, or `crew` for short. Both are on `PATH` via
+Run it as `claude-host <command>`, or `crew` for short. Both are on `PATH` via
 `/root/Scripts/`. The Bash tool's `PATH` does not always include
-`/root/Scripts`, so call it by full path when a bare `claude-crew` fails:
-`/root/.claude/skills/claude-crew/bin/claude-crew`.
+`/root/Scripts`, so call it by full path when a bare `claude-host` fails:
+`/root/.claude/skills/claude-host/bin/claude-host`.
 
 ## The model
 
@@ -50,26 +50,26 @@ Run it as `claude-crew <command>`, or `crew` for short. Both are on `PATH` via
 
 | Command | What it does |
 |---|---|
-| `claude-crew setup [flags]` | Write or patch `crew.conf`. Re-running with no flags keeps every value. |
-| `claude-crew status [--json]` | What runs, what is saved, and any session whose name or conversation needs attention. |
-| `claude-crew new "<title>"` | Start a brand new conversation in its own session. |
-| `claude-crew resume <conversation>` | Start a stopped conversation in its own session, on the model and effort it last used. |
-| `claude-crew stop <target>` | Stop a session, remove it, and drop it from the saved set. The transcript is kept. |
-| `claude-crew relaunch <target>` | Stop and resume one session on the conversation, model and effort it runs now. |
-| `claude-crew model <target> <model>` | Relaunch that conversation on a different model. |
-| `claude-crew effort <target> <level>` | Relaunch it at a different effort level. |
-| `claude-crew clear <target> [--yes]` | Clear a session's context: a new, empty conversation with the same title, model and effort, then delete the conversation it replaced. Without `--yes` it only prints what would happen. Not Claude Code's `/clear`. |
-| `claude-crew delete <conversation> [--yes]` | Stop it if live, then delete its transcript, its sidecar directory and its uploads. Without `--yes` it only prints what would go. |
-| `claude-crew prompt <target> <text>` | Type a real prompt into that session's running claude. |
-| `claude-crew rename <conversation> "<title>"` | Rename a conversation, running or stopped. The window label, the remote-control name and the saved set follow. |
-| `claude-crew save` | Record what runs, with each session's model and effort, as the saved set. |
-| `claude-crew start [--dry-run]` | Start every saved session that is not running. |
-| `claude-crew restart [delay]` | Save what runs, then restart it via systemd, without killing the caller. |
-| `claude-crew boot on\|off\|status` | Install or remove a systemd unit that runs `claude-crew start` after a reboot. |
-| `claude-crew update` | Upgrade the claude binary, then restart. |
-| `claude-crew whoami` | Which session is running the caller, and whether it is protected. |
-| `claude-crew relabel` | Rename sessions and windows to match the conversation each runs. |
-| `claude-crew migrate` | Rename numbered `Claude1`, `Claude2` … sessions after the conversation each runs, without stopping them. |
+| `claude-host setup [flags]` | Write or patch `crew.conf`. Re-running with no flags keeps every value. |
+| `claude-host status [--json]` | What runs, what is saved, and any session whose name or conversation needs attention. |
+| `claude-host new "<title>"` | Start a brand new conversation in its own session. |
+| `claude-host resume <conversation>` | Start a stopped conversation in its own session, on the model and effort it last used. |
+| `claude-host stop <target>` | Stop a session, remove it, and drop it from the saved set. The transcript is kept. |
+| `claude-host relaunch <target>` | Stop and resume one session on the conversation, model and effort it runs now. |
+| `claude-host model <target> <model>` | Relaunch that conversation on a different model. |
+| `claude-host effort <target> <level>` | Relaunch it at a different effort level. |
+| `claude-host clear <target> [--yes]` | Clear a session's context: a new, empty conversation with the same title, model and effort, then delete the conversation it replaced. Without `--yes` it only prints what would happen. Not Claude Code's `/clear`. |
+| `claude-host delete <conversation> [--yes]` | Stop it if live, then delete its transcript, its sidecar directory and its uploads. Without `--yes` it only prints what would go. |
+| `claude-host prompt <target> <text>` | Type a real prompt into that session's running claude. |
+| `claude-host rename <conversation> "<title>"` | Rename a conversation, running or stopped. The window label, the remote-control name and the saved set follow. |
+| `claude-host save` | Record what runs, with each session's model and effort, as the saved set. |
+| `claude-host start [--dry-run]` | Start every saved session that is not running. |
+| `claude-host restart [delay]` | Save what runs, then restart it via systemd, without killing the caller. |
+| `claude-host boot on\|off\|status` | Install or remove a systemd unit that runs `claude-host start` after a reboot. |
+| `claude-host update` | Upgrade the claude binary, then restart. |
+| `claude-host whoami` | Which session is running the caller, and whether it is protected. |
+| `claude-host relabel` | Rename sessions and windows to match the conversation each runs. |
+| `claude-host migrate` | Rename numbered `Claude1`, `Claude2` … sessions after the conversation each runs, without stopping them. |
 
 The same commands are buttons on the web page in `web/`, served on this host at
 `https://crew.aeugene.top`. The README has its install.
@@ -86,14 +86,14 @@ guessed.
 
 Each one is a fact about the tooling, not a caution to be careful.
 
-**`claude-crew start --restart` inline stops the calling session's own claude mid-turn**
-and wedges its remote control. `claude-crew restart` hands the job to systemd, so the
+**`claude-host start --restart` inline stops the calling session's own claude mid-turn**
+and wedges its remote control. `claude-host restart` hands the job to systemd, so the
 caller's shell is already gone when it fires. Use that instead.
 
 **A zero exit code does not mean it worked.** On 2026-08-02 `claude` was not on
 the systemd unit's `PATH`, every pane died instantly, `tmux new-session` had
 already returned 0, and the run logged five successes while nothing was running.
-`claude-crew status` and the `verify: N/N` line report the actual process state.
+`claude-host status` and the `verify: N/N` line report the actual process state.
 
 **An in-band `/resume` does not cleanly switch a live session.** It leaves
 remote control showing the old name while the messages merge into one stream,
@@ -109,19 +109,19 @@ claude, so the tool shell dies with it and the relaunch two lines later never
 happens.
 
 So `stop`, `relaunch`, `model`, `effort`, `clear` and `start --restart` refuse
-when the target is your own session. `claude-crew whoami` shows which session
+when the target is your own session. `claude-host whoami` shows which session
 that is.
 
 ```
-claude-crew model "vps management" sonnet
+claude-host model "vps management" sonnet
 crew: changing model or effort would stop the session you are running in (Claude_2b599c1a-…).
      Pass --self to run it on a timer instead, after this turn ends.
-     'claude-crew restart' does the same for every session at once.
+     'claude-host restart' does the same for every session at once.
 ```
 
 The guard reads the process tree, not tmux, because `$TMUX` is not reliably
 exported into a tool call. Under systemd, cron, or a plain ssh shell there is no
-claude ancestor, so it stays silent — which is exactly how `claude-crew restart`
+claude ancestor, so it stays silent — which is exactly how `claude-host restart`
 keeps doing the same work that an inline `start --restart` is refused. No flag
 distinguishes them; the calling context does.
 
@@ -129,10 +129,10 @@ distinguishes them; the calling context does.
 through systemd and returns, so it fires once the turn has ended:
 
 ```
-claude-crew relaunch "vps management" --self
+claude-host relaunch "vps management" --self
 relaunch targets Claude_2b599c1a-…, the session you are running in.
 scheduled crew-self-1789533704 in 15s, so it runs once this turn has ended
-verify after it fires:  claude-crew status  &&  journalctl -u crew-self-1789533704
+verify after it fires:  claude-host status  &&  journalctl -u crew-self-1789533704
 ```
 
 `--in <secs>` sets the wait, 15 by default. Give it longer when the turn still
@@ -140,7 +140,7 @@ has work to do. The deferred run has no claude ancestor, so it does the work
 inline rather than deferring again.
 
 Report it as scheduled, not as done. The result is only visible in the next
-session, through `claude-crew status` and the unit's journal.
+session, through `claude-host status` and the unit's journal.
 
 ## Busy sessions are not interrupted
 
@@ -185,13 +185,13 @@ README's "Using it as intended" section has the full split.
 
 ## Clearing a session's context
 
-`claude-crew clear` is NOT Claude Code's `/clear`. Say so whenever you offer
+`claude-host clear` is NOT Claude Code's `/clear`. Say so whenever you offer
 either one.
 
 - **Claude Code's `/clear`** starts a new conversation in the same process and
   keeps the old one on disk under the same title, so the store gets two
   conversations with one name. The user does not use it.
-- **`claude-crew clear`** starts a new, empty conversation in its own session
+- **`claude-host clear`** starts a new, empty conversation in its own session
   with the same title, model and effort, then DELETES the conversation it
   replaced, its sidecar and its uploads. There is no backup.
 
@@ -200,22 +200,22 @@ first, show the user what it printed, and add `--yes` only after they say yes.
 Before asking, check its uploads: an upload can be the only copy of a file.
 
 ```
-claude-crew clear "trading research 2"          # prints the plan, changes nothing
-claude-crew clear "trading research 2" --yes    # after the user confirms
+claude-host clear "trading research 2"          # prints the plan, changes nothing
+claude-host clear "trading research 2" --yes    # after the user confirms
 ```
 
 Remote control gets a new link, because it follows the conversation. Aimed at
 your own session, `clear` defers onto a timer, like every other stop path.
 
-**If a `/clear` happened anyway,** the SessionStart hook `claude-crew cleared`
+**If a `/clear` happened anyway,** the SessionStart hook `claude-host cleared`
 has already renamed the session after the new conversation, saved it, and put a
 notice in your context. Tell the user the previous conversation still exists
 under the same name, and ask before deleting it with
-`claude-crew delete <id> --yes`.
+`claude-host delete <id> --yes`.
 
 ## Deleting a conversation
 
-`claude-crew delete` removes three things: `<id>.jsonl`, the `<id>/` directory
+`claude-host delete` removes three things: `<id>.jsonl`, the `<id>/` directory
 beside it holding tool-results, subagents and `custom-title.json`, and
 `~/.claude/uploads/<id>/` holding every file attached to that conversation.
 Uploads sit outside the transcript store, so deleting without them strands
@@ -231,8 +231,8 @@ whatever was attached. There is no backup.
   claude yourself first.
 
 ```
-claude-crew delete "old scratch"          # shows what would go
-claude-crew delete "old scratch" --yes    # deletes it
+claude-host delete "old scratch"          # shows what would go
+claude-host delete "old scratch" --yes    # deletes it
 ```
 
 ## Typing into another session's input box
@@ -246,7 +246,7 @@ it reads as the receiver's own material. A plaintalk sync sent from a trading
 session put trading content into a mahjong app's history exactly that way on
 2026-09-02.
 
-**`claude-crew prompt` is for when you do not.** It types keystrokes into a tty.
+**`claude-host prompt` is for when you do not.** It types keystrokes into a tty.
 The words arrive exactly as given, with no sender context and no authorship, as
 though typed at that keyboard. Use it to unstick a session sitting at a pending
 message, or to hand over context deliberately without authorship attached.
@@ -256,8 +256,8 @@ caller asked for one — carrying no authorship is the point, and the caller can
 put attribution in the text when they want it there.
 
 ```
-claude-crew prompt "Trading Research 1" "re-read the graph index before answering"
-claude-crew prompt a069d553 "status on the ingest queue?"
+claude-host prompt "Trading Research 1" "re-read the graph index before answering"
+claude-host prompt a069d553 "status on the ingest queue?"
 ```
 
 **It reads the input box before typing, and refuses twice over.** If the box is
@@ -285,8 +285,8 @@ turns. They are collapsed to spaces and the command says so.
 ## Renaming a session
 
 ```
-claude-crew rename "trading research 2" "Trading Research 3"
-claude-crew rename 2b599c1a "Host Admin" --self    # your own session
+claude-host rename "trading research 2" "Trading Research 3"
+claude-host rename 2b599c1a "Host Admin" --self    # your own session
 ```
 
 - **A running session** gets `/rename <title>` typed into its input box, so
@@ -302,7 +302,7 @@ claude-crew rename 2b599c1a "Host Admin" --self    # your own session
 The saved set takes the new title either way. The conversation's own title is
 the source of truth: every relaunch reads the latest title from the transcript
 and launches under it. `/rename` from inside a session works too, and
-`claude-crew relabel` then updates the window label without a relaunch.
+`claude-host relabel` then updates the window label without a relaunch.
 
 ## Changing model or effort
 
@@ -311,8 +311,8 @@ it again on the same conversation, in the same pane. There is no in-band
 round-trip to wedge.
 
 ```
-claude-crew model "Web Ko Gedy" sonnet
-claude-crew effort "trading research 2" xhigh
+claude-host model "Web Ko Gedy" sonnet
+claude-host effort "trading research 2" xhigh
 ```
 
 Each changes only the setting it names. The conversation keeps its other
@@ -320,13 +320,13 @@ setting, and `resume` brings a stopped conversation back on both.
 
 A session follows the `crew.conf` default until someone sets it. The saved set
 stores `-` for a setting that follows the default, so changing the default with
-`claude-crew setup --model sonnet` reaches every such session on the next start
+`claude-host setup --model sonnet` reaches every such session on the next start
 or restart, while a session set with `model` or `effort` keeps its value.
 `default` hands a setting back:
 
 ```
-claude-crew model "trading research 2" default
-claude-crew effort "trading research 2" default
+claude-host model "trading research 2" default
+claude-host effort "trading research 2" default
 ```
 
 ## Saved sessions
@@ -341,12 +341,12 @@ scheduling. A session that died keeps its entry, so a crash comes back on the
 next `start`. An entry leaves only through `stop`, `delete`, `clear`, or a
 stopped conversation whose transcript is gone.
 
-`claude-crew boot on` makes this survive a reboot. Without it, nothing starts the
+`claude-host boot on` makes this survive a reboot. Without it, nothing starts the
 sessions after the machine comes back.
 
 ## Configuration
 
-`~/.claude/skills/claude-crew/crew.conf`, written by `claude-crew setup`. Plain `KEY=value`,
+`~/.claude/skills/claude-host/crew.conf`, written by `claude-host setup`. Plain `KEY=value`,
 safe to edit by hand.
 
 | Key | Default | Notes |
@@ -374,13 +374,13 @@ without touching argv, the `-n` display name, the tmux session name or the
 window name. All of them keep naming the conversation it started on, so the
 session reads as one thing while running another.
 
-`claude-crew` resolves this from `~/.claude/sessions/<pid>.json`, which is keyed
+`claude-host` resolves this from `~/.claude/sessions/<pid>.json`, which is keyed
 by process id and follows the switch. `status` prints the real conversation,
 flags a session whose name has drifted, and flags any conversation that two
 sessions hold at once. Two live processes on one transcript interleave their
 writes, so stop one as soon as it shows up.
 
-`claude-crew relabel` renames drifted sessions and windows.
+`claude-host relabel` renames drifted sessions and windows.
 
 ## Never run `tmux kill-server`
 
@@ -403,5 +403,5 @@ Remove test sessions one at a time by name. Never by killing a server.
 `pgrep -f` and `pkill -f` match against a flattened command line, so a pattern
 like `--resume <id>`, a session title, or a script path also matches the shell
 that invoked you. It killed a live session twice while this skill was being
-built. `claude-crew` reads argv out of `/proc` for the processes inside its own panes
+built. `claude-host` reads argv out of `/proc` for the processes inside its own panes
 instead, which is the narrow question actually being asked.

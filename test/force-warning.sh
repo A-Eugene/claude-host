@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Checks the busy guards: refuse without --force, warn and proceed with it.
-# Loads the three guard functions from bin/claude-crew and stubs what they read.
+# Loads the three guard functions from bin/claude-host and stubs what they read.
 set -uo pipefail
-crew="$(dirname "$0")/../bin/claude-crew"
+crew="$(dirname "$0")/../bin/claude-host"
 source <(sed -n '/^busy_cost() {/,/^}/p; /^guard_busy() {/,/^}/p; /^guard_all() {/,/^}/p' "$crew")
 
 declare -A PID_OF_SESS=([A]=1 [B]=2 [C]=3) STATE=([A]=working [B]=idle [C]=draft)

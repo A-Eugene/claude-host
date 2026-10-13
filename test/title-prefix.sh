@@ -2,7 +2,7 @@
 # Checks the title prefix: `new` and `rename` put it in front once, a name typed
 # without it still matches, and setup writes it to crew.conf.
 set -uo pipefail
-crew="$(dirname "$0")/../bin/claude-crew"
+crew="$(dirname "$0")/../bin/claude-host"
 source <(sed -n '/^with_prefix() {/,/^}/p; /^norm_name() {/,/^}/p; /^name_matches() {/,/^}/p' "$crew")
 fail() { echo "FAIL: $*"; exit 1; }
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Claude Crew web: a page for the claude-crew fleet.
+"""Claude Host web: a page for the claude-host fleet.
 
-Every action runs one claude-crew command. The page holds no fleet logic of its
-own, so a fix to claude-crew is a fix here too.
+Every action runs one claude-host command. The page holds no fleet logic of its
+own, so a fix to claude-host is a fix here too.
 
   python3 server.py                 serve on 127.0.0.1:$CREW_WEB_PORT (3115)
   python3 server.py set-password    set the login password (read from stdin)
@@ -23,8 +23,8 @@ from pathlib import Path
 
 HOST, PORT = "127.0.0.1", int(os.environ.get("CREW_WEB_PORT", "3115"))
 ROOT = Path(__file__).resolve().parent
-CREW = os.environ.get("CREW_BIN", str(ROOT.parent / "bin" / "claude-crew"))
-CONFIG = Path(os.environ.get("CREW_WEB_CONFIG", Path.home() / ".config" / "claude-crew-web"))
+CREW = os.environ.get("CREW_BIN", str(ROOT.parent / "bin" / "claude-host"))
+CONFIG = Path(os.environ.get("CREW_WEB_CONFIG", Path.home() / ".config" / "claude-host-web"))
 PASSWORD_FILE = CONFIG / "password"
 TOKENS_FILE = CONFIG / "tokens.json"
 REFRESH_S = 15
@@ -257,7 +257,7 @@ def run_action(a):
 
 # --- http -----------------------------------------------------------------------
 class Handler(BaseHTTPRequestHandler):
-    server_version = "claude-crew-web"
+    server_version = "claude-host-web"
 
     def log_message(self, fmt, *args):
         pass

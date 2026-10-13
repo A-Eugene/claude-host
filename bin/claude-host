@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claude-crew — run Claude Code conversations as long-lived tmux sessions, one per
+# claude-host — run Claude Code conversations as long-lived tmux sessions, one per
 # conversation, and start, stop, restart and clear them without losing track.
 #
 # The model:
@@ -13,7 +13,7 @@
 # There is no fixed number of sessions. Starting a conversation creates its
 # session and stopping it removes the session, so nothing sits empty.
 #
-# Usage:  claude-crew <command> [args]
+# Usage:  claude-host <command> [args]
 #   setup [flags]              write/patch crew.conf (see --help)
 #   status [--json]            what is running, what is saved, what is stopped
 #   start [--restart] [--dry-run]
@@ -66,7 +66,7 @@
 
 set -euo pipefail
 
-# readlink -f, not dirname alone: crew is reached through /root/Scripts/claude-crew,
+# readlink -f, not dirname alone: crew is reached through /root/Scripts/claude-host,
 # a symlink, and the unresolved path puts CREW_DIR at /root — so every run
 # reported "not set up yet" while crew.conf sat in the skill directory.
 CREW_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
@@ -129,12 +129,12 @@ UUID_RE='^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
 die() { printf 'crew: %s\n' "$*" >&2; exit 1; }
 
 load_conf() {
-  [ -f "$CONF" ] || die "not set up yet — run: claude-crew setup"
+  [ -f "$CONF" ] || die "not set up yet — run: claude-host setup"
   # shellcheck disable=SC1090
   source "$CONF"
   local k
   for k in "${CONF_KEYS[@]}"; do
-    [ -n "${!k:-}" ] || die "crew.conf is missing $k — run: claude-crew setup"
+    [ -n "${!k:-}" ] || die "crew.conf is missing $k — run: claude-host setup"
   done
   command -v "$CLAUDE_BIN" >/dev/null || die "claude binary not found: $CLAUDE_BIN (PATH=$PATH)"
 }
@@ -383,7 +383,7 @@ scan_sessions() {
 # because $TMUX is not reliably exported into a tool call's environment.
 #
 # When crew runs from systemd, cron, or a plain ssh shell there is no claude
-# ancestor and this returns empty — which is exactly why `claude-crew restart`
+# ancestor and this returns empty — which is exactly why `claude-host restart`
 # keeps working while an inline `start --restart` is refused.
 ppid_of() {
   local s
@@ -437,10 +437,10 @@ defer_self() {                        # $1=what was asked
     die "$1 targets your own session, and systemd-run is missing so it cannot be deferred. Nothing was done."
   "${CREW_SYSTEMD_RUN:-systemd-run}" --on-active="$DEFER_DELAY" --unit="$unit" --collect \
     --setenv=HOME="$HOME" --property=KillMode=process \
-    "$CREW_DIR/bin/claude-crew" --wait-idle ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
+    "$CREW_DIR/bin/claude-host" --wait-idle ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
   echo "$1 targets $SELF_SESS, the session you are running in."
   echo "scheduled $unit in ${DEFER_DELAY}s, so it runs once this turn has ended"
-  echo "verify after it fires:  claude-crew status  &&  journalctl -u $unit"
+  echo "verify after it fires:  claude-host status  &&  journalctl -u $unit"
   exit 0
 }
 
@@ -451,7 +451,7 @@ refuse_self() {
   [ "$ALLOW_SELF" = 1 ] && defer_self "$2"    # never returns
   die "$2 would stop the session you are running in ($1).
      Pass --self to run it on a timer instead, after this turn ends.
-     'claude-crew restart' does the same for every session at once."
+     'claude-host restart' does the same for every session at once."
 }
 
 # Background tool shells a claude process started and still runs: a monitor, or a
@@ -616,7 +616,7 @@ state_read() {
 state_write() {
   local tmp="$STATE.tmp.$$" id
   {
-    echo "# claude-crew saved sessions. start and restart bring these back. Edit with claude-crew stop or save."
+    echo "# claude-host saved sessions. start and restart bring these back. Edit with claude-host stop or save."
     echo "# conversation<TAB>model<TAB>effort<TAB>title   (\"-\" follows crew.conf)"
     for id in ${ST_ORDER[@]+"${ST_ORDER[@]}"}; do
       [ -n "${ST_MODEL[$id]+x}" ] || continue
@@ -714,7 +714,7 @@ save_state() {
 status_saved() {
   state_read
   if [ "${#ST_ORDER[@]}" -eq 0 ]; then
-    echo "saved: nothing, so start brings back nothing. Run claude-crew save to keep what runs."
+    echo "saved: nothing, so start brings back nothing. Run claude-host save to keep what runs."
     return 0
   fi
   echo "saved (what start and restart bring back):"
@@ -964,7 +964,7 @@ resolve_sess() {
   done
   case "${#hits[@]}" in
     1) echo "${hits[0]}" ;;
-    0) die "no running session matches '$arg' (try: claude-crew status)" ;;
+    0) die "no running session matches '$arg' (try: claude-host status)" ;;
     *) die "'$arg' matches ${#hits[@]} running sessions:"$'\n'"$(for s in "${hits[@]}"; do printf '  %s  %s\n' "$s" "$(title_of_sess "$s")"; done)" ;;
   esac
 }
@@ -1034,12 +1034,12 @@ cmd_setup() {
       die "setup: sessions still run in $old_workdir. Stop every session before changing the working directory."
     state_read
     [ "${#ST_ORDER[@]}" -eq 0 ] ||
-      die "setup: saved sessions belong to $old_workdir and cannot resume from $WORKDIR. Stop them first (claude-crew stop <target>)."
+      die "setup: saved sessions belong to $old_workdir and cannot resume from $WORKDIR. Stop them first (claude-host stop <target>)."
   fi
 
   {
-    echo "# crew.conf — written by \`claude-crew setup\`. Safe to edit by hand."
-    echo "# Regenerate or patch with: claude-crew setup --model sonnet --effort high"
+    echo "# crew.conf — written by \`claude-host setup\`. Safe to edit by hand."
+    echo "# Regenerate or patch with: claude-host setup --model sonnet --effort high"
     local k
     for k in "${CONF_KEYS[@]}"; do printf '%s=%q\n' "$k" "${!k}"; done
     printf 'TITLE_PREFIX=%q\n' "$TITLE_PREFIX"
@@ -1081,7 +1081,7 @@ cmd_status_json() {
     [ -n "$rid" ] && [ -z "${SESS_OF_CONV[$rid]:-}" ] && convs+="$rid"$'\t'"$rtitle"$'\n'
   done < <(list_convs 25)
   local boot=off d dupes=""
-  if [ -f "${CREW_UNIT_DIR:-/etc/systemd/system}/claude-crew.service" ]; then boot=on; fi
+  if [ -f "${CREW_UNIT_DIR:-/etc/systemd/system}/claude-host.service" ]; then boot=on; fi
   for d in ${DUPES[@]+"${DUPES[@]}"}; do dupes+="$d"$'\n'; done
   SESS_TSV="$tsv" SAVED_TSV="$saved" CONVS_TSV="$convs" DUPES_TXT="$dupes" python3 - \
     "$MODEL" "$EFFORT" "$AUTOCOMPACT" "$PERMISSION_MODE" "$boot" "$WORKDIR" "$TITLE_PREFIX" <<'PY2'
@@ -1131,7 +1131,7 @@ cmd_status() {
     # The session name records the conversation it started on. A /resume or
     # /clear inside moves it to another, which relabel fixes.
     if [ -n "$id" ] && [ "$s" != "$(sess_of_conv "$id")" ]; then
-      printf '  %-8s  %s\n' "" "session $s runs $id. claude-crew relabel renames it"
+      printf '  %-8s  %s\n' "" "session $s runs $id. claude-host relabel renames it"
     fi
   done
   [ "$n" -gt 0 ] || echo "  (none running)"
@@ -1228,7 +1228,7 @@ cmd_start() {
     case "$a" in
       --restart) again=1 ;;
       --dry-run) dry=1 ;;
-      *) die "start: usage: claude-crew start [--restart] [--dry-run]" ;;
+      *) die "start: usage: claude-host start [--restart] [--dry-run]" ;;
     esac
   done
   if [ "$again" = 1 ] && [ "$dry" = 1 ]; then die "start: --restart and --dry-run do not combine"; fi
@@ -1236,7 +1236,7 @@ cmd_start() {
   state_read
   if [ "${#ST_ORDER[@]}" -eq 0 ]; then
     echo "nothing is saved, so there is nothing to start"
-    echo "hint: claude-crew resume <conversation> starts one, and claude-crew save keeps what runs" >&2
+    echo "hint: claude-host resume <conversation> starts one, and claude-host save keeps what runs" >&2
     return 0
   fi
   scan_sessions
@@ -1320,7 +1320,7 @@ cmd_start() {
   fi
 }
 
-# Restart every session WITHOUT killing the caller. Running `claude-crew start
+# Restart every session WITHOUT killing the caller. Running `claude-host start
 # --restart` inline stops the calling session's own claude mid-turn and wedges its
 # remote control, so hand the job to systemd: the caller's shell is already gone
 # when the restart fires.
@@ -1335,7 +1335,7 @@ cmd_start() {
 # Do NOT swap systemd for setsid/nohup + sleep — that leaves a sleeping child
 # that can still be reaped along with the session.
 #
-# A clean journal does NOT mean it worked. Confirm with `claude-crew status` and the
+# A clean journal does NOT mean it worked. Confirm with `claude-host status` and the
 # `verify: N/N` line, never the exit code.
 cmd_restart() {
   local delay="${1:-15}" unit="crew-restart-$(date +%s)"
@@ -1348,18 +1348,18 @@ cmd_restart() {
   [ "$FORCE" = 1 ] && when=--force
   systemd-run --on-active="$delay" --unit="$unit" --collect \
     --setenv=HOME="$HOME" --property=KillMode=process \
-    "$CREW_DIR/bin/claude-crew" "$when" start --restart
+    "$CREW_DIR/bin/claude-host" "$when" start --restart
   echo "scheduled $unit in ${delay}s"
   if [ "$when" = --wait-idle ]; then
     echo "a session that gets busy before it fires is waited on, up to 15 minutes, never interrupted. An unsent draft stops the restart"
   fi
-  echo "verify after it fires:  claude-crew status  &&  journalctl -u $unit | grep verify:"
+  echo "verify after it fires:  claude-host status  &&  journalctl -u $unit | grep verify:"
 }
 
 # Start a brand new conversation in its own session. The crew picks the id
 # (--session-id), so the session is named before claude starts.
 cmd_new() {
-  [ $# -eq 1 ] && [ -n "$1" ] || die 'new: usage: claude-crew new "<title>"'
+  [ $# -eq 1 ] && [ -n "$1" ] || die 'new: usage: claude-host new "<title>"'
   local title id s pid
   title=$(with_prefix "$1")
   id=$(new_uuid); s=$(sess_of_conv "$id")
@@ -1373,7 +1373,7 @@ cmd_new() {
 # Start a stopped conversation in its own session, on the model and effort it
 # last ran with.
 cmd_resume() {
-  [ $# -eq 1 ] || die "resume: usage: claude-crew resume <conversation>"
+  [ $# -eq 1 ] || die "resume: usage: claude-host resume <conversation>"
   scan_sessions
   local id title; IFS=$'\t' read -r id title < <(resolve_conv "$1")
   if [ -n "${SESS_OF_CONV[$id]:-}" ]; then
@@ -1399,7 +1399,7 @@ cmd_resume() {
 # store ends up with two conversations under one name. `cleared` below handles
 # a /clear that happens anyway.
 cmd_clear() {
-  local usage='clear: usage: claude-crew clear <target> [--yes]'
+  local usage='clear: usage: claude-host clear <target> [--yes]'
   local target="" yes=0
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -1509,7 +1509,7 @@ except Exception: print("")' 2>/dev/null) || new=""
   state_unlock
   [ -f "$(projdir)/$old.jsonl" ] || return 0
   cat <<NOTICE
-claude-crew: the user just ran Claude Code's built-in /clear.
+claude-host: the user just ran Claude Code's built-in /clear.
 It started this new conversation ($new) but did NOT delete the previous one.
 The previous conversation $old ("${title:-untitled}") is still on disk under the same title,
 so the crew now has two conversations with one name.
@@ -1517,13 +1517,13 @@ The crew now saves this session under the new conversation.
 
 In your first reply, before anything else, tell the user this in two or three sentences
 and ask whether to delete the previous conversation. Delete it only after they say yes:
-  $CREW_DIR/bin/claude-crew delete $old --yes
+  $CREW_DIR/bin/claude-host delete $old --yes
 NOTICE
   if [ -n "${CREW_WEB_URL:-}" ]; then
     echo "They can also delete it from the Stopped list at $CREW_WEB_URL."
   fi
   cat <<NOTICE
-Tell them that next time "claude-crew clear" (Clear Context on the crew web page) clears
+Tell them that next time "claude-host clear" (Clear Context on the crew web page) clears
 a session in one step: it asks first and leaves no duplicate.
 NOTICE
 }
@@ -1546,7 +1546,7 @@ live_pids_of_conv() {
 # (tool-results, subagents, custom-title.json) and its uploads. There is no
 # backup, so a bare run only prints what would go, and --yes is required to act.
 cmd_delete() {
-  local usage='delete: usage: claude-crew delete <conversation> [--yes]'
+  local usage='delete: usage: claude-host delete <conversation> [--yes]'
   local target="" yes=0
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -1685,7 +1685,7 @@ PY
 # message: remote control regularly wedges at "pending" after a model or effort
 # change, and the tty always accepts input.
 cmd_prompt() {
-  [ $# -ge 2 ] || die "prompt: usage: claude-crew prompt <target> <text...>"
+  [ $# -ge 2 ] || die "prompt: usage: claude-host prompt <target> <text...>"
   scan_sessions
   detect_self
   local s; s=$(resolve_sess "$1"); shift
@@ -1751,7 +1751,7 @@ cmd_prompt() {
 # and an agent-name line in the transcript, and custom-title.json beside it. The
 # window label and the saved set follow either way.
 cmd_rename() {
-  [ $# -eq 2 ] && [ -n "$2" ] || die 'rename: usage: claude-crew rename <conversation> "<new title>"'
+  [ $# -eq 2 ] && [ -n "$2" ] || die 'rename: usage: claude-host rename <conversation> "<new title>"'
   local new; new=$(with_prefix "$2")
   case "$new" in *$'\n'*|*$'\r'*) die "rename: a title is one line" ;; esac
   scan_sessions
@@ -1848,26 +1848,26 @@ relaunch_with() {       # $1=target $2=model-or-empty $3=effort-or-empty [$4=wha
 }
 
 cmd_model() {
-  [ $# -eq 2 ] || die "model: usage: claude-crew model <target> <model|default>"
+  [ $# -eq 2 ] || die "model: usage: claude-host model <target> <model|default>"
   relaunch_with "$1" "$2" ""
 }
 
 cmd_effort() {
-  [ $# -eq 2 ] || die "effort: usage: claude-crew effort <target> <low|medium|high|xhigh|max|default>"
+  [ $# -eq 2 ] || die "effort: usage: claude-host effort <target> <low|medium|high|xhigh|max|default>"
   case "$2" in low|medium|high|xhigh|max|default) ;; *) die "effort: must be low|medium|high|xhigh|max|default" ;; esac
   relaunch_with "$1" "" "$2"
 }
 
 # Stop and resume one session on the conversation, model and effort it runs now.
 cmd_relaunch() {
-  [ $# -eq 1 ] || die "relaunch: usage: claude-crew relaunch <target>"
+  [ $# -eq 1 ] || die "relaunch: usage: claude-host relaunch <target>"
   relaunch_with "$1" "" "" "relaunch"
 }
 
 # Stop a session, remove it, and drop it from the saved set, so start and restart
-# leave it stopped. The transcript is kept; `claude-crew resume` brings it back.
+# leave it stopped. The transcript is kept; `claude-host resume` brings it back.
 cmd_stop() {
-  [ $# -eq 1 ] || die "stop: usage: claude-crew stop <target>"
+  [ $# -eq 1 ] || die "stop: usage: claude-host stop <target>"
   # Save first. On a host that has never saved, dropping one session from an
   # empty record would leave every OTHER session unsaved, and the next start
   # would find nothing to launch.
@@ -1880,7 +1880,7 @@ cmd_stop() {
   echo "stopping ${title:-untitled} ($s)"
   close_sess "$s"
   if [ -n "$id" ]; then state_lock; state_read; state_drop "$id"; state_write; state_unlock; fi
-  echo "stopped${id:+. Transcript $id is kept, and claude-crew resume brings it back}"
+  echo "stopped${id:+. Transcript $id is kept, and claude-host resume brings it back}"
 }
 
 cmd_save() {
@@ -1893,16 +1893,16 @@ cmd_save() {
 cmd_boot() {
   local unit_dir="${CREW_UNIT_DIR:-/etc/systemd/system}"
   local sysctl="${CREW_SYSTEMCTL:-systemctl}"
-  local unit="$unit_dir/claude-crew.service"
+  local unit="$unit_dir/claude-host.service"
   case "${1:-status}" in
     on)
       state_read
       if [ "${#ST_ORDER[@]}" -eq 0 ]; then
-        echo "note: nothing is saved yet, so at boot start brings back nothing. Run claude-crew save to keep what runs." >&2
+        echo "note: nothing is saved yet, so at boot start brings back nothing. Run claude-host save to keep what runs." >&2
       fi
       cat > "$unit" <<UNIT
 [Unit]
-Description=claude-crew: start the saved Claude Code sessions after boot
+Description=claude-host: start the saved Claude Code sessions after boot
 Wants=network-online.target
 After=network-online.target
 
@@ -1910,7 +1910,7 @@ After=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 Environment=HOME=$HOME
-ExecStart=$CREW_DIR/bin/claude-crew start
+ExecStart=$CREW_DIR/bin/claude-host start
 # The first tmux server of the boot is spawned inside this unit's cgroup.
 # KillMode=process keeps systemd from killing it, and every session in it,
 # when this unit is stopped.
@@ -1921,13 +1921,13 @@ TimeoutStartSec=300
 WantedBy=multi-user.target
 UNIT
       "$sysctl" daemon-reload
-      "$sysctl" enable claude-crew.service
+      "$sysctl" enable claude-host.service
       echo "boot on: wrote $unit and enabled it"
-      echo "after the next reboot it runs 'claude-crew start' once the network is up. The running sessions were not touched."
+      echo "after the next reboot it runs 'claude-host start' once the network is up. The running sessions were not touched."
       ;;
     off)
       if [ -f "$unit" ]; then
-        "$sysctl" disable claude-crew.service || true
+        "$sysctl" disable claude-host.service || true
         rm -f "$unit"
         "$sysctl" daemon-reload
       fi
@@ -1935,12 +1935,12 @@ UNIT
       ;;
     status)
       if [ -f "$unit" ]; then
-        printf 'boot: unit at %s, %s\n' "$unit" "$("$sysctl" is-enabled claude-crew.service 2>/dev/null; true)"
+        printf 'boot: unit at %s, %s\n' "$unit" "$("$sysctl" is-enabled claude-host.service 2>/dev/null; true)"
       else
-        echo "boot: off. Nothing starts the sessions at boot. Turn on with: claude-crew boot on"
+        echo "boot: off. Nothing starts the sessions at boot. Turn on with: claude-host boot on"
       fi
       ;;
-    *) die "boot: usage: claude-crew boot on|off|status" ;;
+    *) die "boot: usage: claude-host boot on|off|status" ;;
   esac
 }
 
@@ -1998,5 +1998,5 @@ case "$cmd" in
   relaunch) load_conf; cmd_relaunch "$@" ;;
   update)   load_conf; cmd_update "$@" ;;
   -h|--help|help) sed -n '2,/^set -euo/p' "$0" | sed 's/^# \{0,1\}//;$d' ;;
-  *) die "unknown command '$cmd' (try: claude-crew --help)" ;;
+  *) die "unknown command '$cmd' (try: claude-host --help)" ;;
 esac

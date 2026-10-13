@@ -1,4 +1,4 @@
-# claude-crew
+# claude-host
 
 Run your Claude Code conversations as long-lived tmux sessions, one per
 conversation, and start, stop, restart and clear them without losing track of
@@ -7,15 +7,15 @@ which is which.
 If you keep several long-running Claude Code conversations on one machine, you
 end up managing them by hand: which tmux window holds which conversation, how to
 restart them all without killing the one you are typing in, how to bring a
-stopped one back on the model it used. `claude-crew` does that.
+stopped one back on the model it used. `claude-host` does that.
 
 It is built for a machine with no desktop, such as a server, where Claude Code
 runs in a terminal and tmux is what keeps a conversation alive.
 
 ```
-claude-crew setup
-claude-crew resume "trading research"
-claude-crew status
+claude-host setup
+claude-host resume "trading research"
+claude-host status
 ```
 
 ```
@@ -51,7 +51,7 @@ or effort cheap rather than destructive.
 
 ## Using it as intended
 
-claude-crew works differently from the usual way of running Claude Code, and the
+claude-host works differently from the usual way of running Claude Code, and the
 difference decides where each kind of project configuration belongs.
 
 **The usual way:** you open Claude Code inside a project folder. It then loads
@@ -93,26 +93,26 @@ session, so change it only when every session should start in the same place.
 
 | Command | What it does |
 |---|---|
-| `claude-crew setup [flags]` | Write or patch the config. Re-running with no flags keeps every value. |
-| `claude-crew status [--json]` | What runs, what is saved, and any session whose name or conversation needs attention. |
-| `claude-crew new "<title>"` | Start a brand new conversation in its own session. |
-| `claude-crew resume <conversation>` | Start a stopped conversation in its own session, on the model and effort it last used. |
-| `claude-crew stop <target>` | Stop a session, remove it, and drop it from the saved set. The transcript is kept. |
-| `claude-crew relaunch <target>` | Stop and resume one session on the conversation, model and effort it runs now. |
-| `claude-crew model <target> <model>` | Relaunch that conversation on a different model. |
-| `claude-crew effort <target> <level>` | Relaunch it at a different effort level. |
-| `claude-crew clear <target> [--yes]` | Clear a session's context: a new, empty conversation with the same title, model and effort, then delete the conversation it replaced. Without `--yes` it only prints what would happen. Not Claude Code's `/clear`. |
-| `claude-crew delete <conversation> [--yes]` | Stop it if live, then delete its transcript, its sidecar directory and its uploads. Without `--yes` it only prints what would go. There is no backup. |
-| `claude-crew prompt <target> <text>` | Type keystrokes into that session's input box. Not a messaging channel — see below. |
-| `claude-crew rename <conversation> "<title>"` | Rename a conversation, running or stopped. The window label, the remote-control name and the saved set follow. |
-| `claude-crew save` | Record what runs, with each session's model and effort, as the saved set. |
-| `claude-crew start [--dry-run]` | Start every saved session that is not running. `--restart` restarts the running ones too. |
-| `claude-crew restart [delay]` | Save what runs, then restart it via systemd, without killing the caller. |
-| `claude-crew boot on\|off\|status` | Install or remove a systemd unit that runs `claude-crew start` after a reboot. |
-| `claude-crew update` | Upgrade the claude binary, then restart. |
-| `claude-crew whoami` | Which session is running the caller, and whether it is protected. |
-| `claude-crew relabel` | Rename sessions and windows to match the conversation each runs. |
-| `claude-crew migrate` | Rename the numbered `Claude1`, `Claude2` … sessions of earlier versions after the conversation each runs, without stopping them. |
+| `claude-host setup [flags]` | Write or patch the config. Re-running with no flags keeps every value. |
+| `claude-host status [--json]` | What runs, what is saved, and any session whose name or conversation needs attention. |
+| `claude-host new "<title>"` | Start a brand new conversation in its own session. |
+| `claude-host resume <conversation>` | Start a stopped conversation in its own session, on the model and effort it last used. |
+| `claude-host stop <target>` | Stop a session, remove it, and drop it from the saved set. The transcript is kept. |
+| `claude-host relaunch <target>` | Stop and resume one session on the conversation, model and effort it runs now. |
+| `claude-host model <target> <model>` | Relaunch that conversation on a different model. |
+| `claude-host effort <target> <level>` | Relaunch it at a different effort level. |
+| `claude-host clear <target> [--yes]` | Clear a session's context: a new, empty conversation with the same title, model and effort, then delete the conversation it replaced. Without `--yes` it only prints what would happen. Not Claude Code's `/clear`. |
+| `claude-host delete <conversation> [--yes]` | Stop it if live, then delete its transcript, its sidecar directory and its uploads. Without `--yes` it only prints what would go. There is no backup. |
+| `claude-host prompt <target> <text>` | Type keystrokes into that session's input box. Not a messaging channel — see below. |
+| `claude-host rename <conversation> "<title>"` | Rename a conversation, running or stopped. The window label, the remote-control name and the saved set follow. |
+| `claude-host save` | Record what runs, with each session's model and effort, as the saved set. |
+| `claude-host start [--dry-run]` | Start every saved session that is not running. `--restart` restarts the running ones too. |
+| `claude-host restart [delay]` | Save what runs, then restart it via systemd, without killing the caller. |
+| `claude-host boot on\|off\|status` | Install or remove a systemd unit that runs `claude-host start` after a reboot. |
+| `claude-host update` | Upgrade the claude binary, then restart. |
+| `claude-host whoami` | Which session is running the caller, and whether it is protected. |
+| `claude-host relabel` | Rename sessions and windows to match the conversation each runs. |
+| `claude-host migrate` | Rename the numbered `Claude1`, `Claude2` … sessions of earlier versions after the conversation each runs, without stopping them. |
 
 `<target>` is a running session: its tmux name, its conversation id or the first
 8 or more characters of one, or a loose match on its title. `<conversation>`
@@ -129,7 +129,7 @@ the words. Messaging merges context: the sender's working context rides along
 and lands in the receiver's history reading as the receiver's own material. Use
 it when you need the peer to acknowledge or reply.
 
-`claude-crew prompt` types keystrokes into a tty. The words arrive exactly as
+`claude-host prompt` types keystrokes into a tty. The words arrive exactly as
 given, with no sender context and no authorship, as though typed at that
 keyboard. Use it to unstick a session waiting at a pending message, or to hand
 over context deliberately without authorship attached.
@@ -170,7 +170,7 @@ That task is a child of the session's claude, so stopping claude would end it.
 what it loses, then proceeds:
 
 ```
-$ claude-crew --force stop "trading research 2"
+$ claude-host --force stop "trading research 2"
 WARNING: stop --force: [VPS] Trading Research 2 (Claude_a069d553) is waiting on a background task it started, which ends with it.
 ```
 
@@ -204,14 +204,14 @@ not idle and offer "Force Restart All" or "Force Update".
 
 ## Clearing a session's context
 
-`claude-crew clear <target>` is not Claude Code's `/clear`, and the two do
+`claude-host clear <target>` is not Claude Code's `/clear`, and the two do
 different things.
 
 - **Claude Code's `/clear`** starts a new conversation inside the same process
   and keeps the old one on disk. The process still carries the `-n` name it was
   launched with, so the new conversation gets the same title. The old one stays
   resumable, and the store ends up with two conversations under one name.
-- **`claude-crew clear`** empties the context for good. It starts a new, empty
+- **`claude-host clear`** empties the context for good. It starts a new, empty
   conversation in its own session with the same title, model and effort, then
   deletes the conversation it replaced, with its sidecar and uploads. There is
   no backup.
@@ -220,8 +220,8 @@ Clearing deletes, so it asks first, like `delete`. A bare run prints the plan
 and changes nothing. `--yes` carries it out. The web page asks in a dialog.
 
 ```
-claude-crew clear "trading research 2"          # print what would be deleted
-claude-crew clear "trading research 2" --yes    # clear it
+claude-host clear "trading research 2"          # print what would be deleted
+claude-host clear "trading research 2" --yes    # clear it
 ```
 
 The remote-control link changes with it, because remote control follows the
@@ -230,7 +230,7 @@ conversation.
 Aimed at the session you are running in, it defers onto a timer like every
 other stop path.
 
-**A `/clear` typed anyway** is caught by a SessionStart hook. `claude-crew
+**A `/clear` typed anyway** is caught by a SessionStart hook. `claude-host
 cleared` renames the session after the new conversation, saves it in the saved
 set, and puts a notice in the new session's context: the previous conversation
 still exists under the same name, and the session should ask the user before
@@ -238,7 +238,7 @@ deleting it. The hook deletes nothing. Register it in `~/.claude/settings.json`:
 
 ```json
 {"hooks": {"SessionStart": [{"matcher": "clear", "hooks": [{"type": "command",
-  "command": "CREW_WEB_URL=https://crew.example.com ~/.claude/skills/claude-crew/bin/claude-crew cleared"}]}]}}
+  "command": "CREW_WEB_URL=https://crew.example.com ~/.claude/skills/claude-host/bin/claude-host cleared"}]}]}}
 ```
 
 `CREW_WEB_URL` is optional. When set, the notice points at the web page.
@@ -255,7 +255,7 @@ scheduling. A session that died keeps its entry, so a crash comes back on the
 next `start`. An entry leaves only through `stop`, `delete`, `clear`, or a
 stopped conversation whose transcript is gone.
 
-`claude-crew boot on` makes this survive a reboot. Without it, nothing starts the
+`claude-host boot on` makes this survive a reboot. Without it, nothing starts the
 sessions after the machine comes back.
 
 ## Install
@@ -263,7 +263,7 @@ sessions after the machine comes back.
 [INSTALL.md](INSTALL.md) has the steps, written so a person or an AI agent can
 follow them and check each one.
 
-Config lands at `~/.claude/skills/claude-crew/crew.conf`. It is gitignored.
+Config lands at `~/.claude/skills/claude-host/crew.conf`. It is gitignored.
 **A reinstall must not overwrite it or `sessions.state`.** Use
 `rsync --exclude=crew.conf --exclude=sessions.state --exclude=slots.state` if
 you script the copy.
@@ -301,19 +301,19 @@ naming a project path can use up the one refusal.
 Restart, Send Prompt, Clear Context and Stop, and a New Session button above it.
 Stopped lists the other conversations, each with Start and Delete. It warns
 before starting a session when the host is low on memory. Every action runs one
-`claude-crew` command, and the page reads `claude-crew status --json`, so it
+`claude-host` command, and the page reads `claude-host status --json`, so it
 holds no crew logic of its own. Model and effort for a single session are
 changed inside that session, through remote control. The page changes the
 defaults.
 
-The server runs `claude-crew status --json` every 15 seconds and after each
+The server runs `claude-host status --json` every 15 seconds and after each
 action, and the page reads that snapshot every 10 seconds. Refresh runs a new
 scan and waits for it, which takes a few seconds.
 
 ```
 web/server.py                  Python standard-library server on 127.0.0.1:3115
 web/index.html                 the page, no build step
-web/claude-crew-web.service    systemd unit
+web/claude-host-web.service    systemd unit
 web/nginx.conf                 HTTPS proxy, with crew.example.com to replace
 ```
 
@@ -323,7 +323,7 @@ lock that address out for 15 minutes.
 
 [INSTALL.md](INSTALL.md) covers the service and the HTTPS proxy.
 
-The password hash and the login tokens live in `~/.config/claude-crew-web/`,
+The password hash and the login tokens live in `~/.config/claude-host-web/`,
 outside the repository. Setting a new password signs every browser out.
 
 ## Configuration
@@ -351,19 +351,19 @@ disk. A file older than the process it names is ignored, or a save would record
 the wrong conversation for that session.
 
 Each of these is a real failure that happened on a real host. The comments in
-`bin/claude-crew` mark them at the code that prevents them.
+`bin/claude-host` mark them at the code that prevents them.
 
 **A zero exit code does not mean it worked.** A systemd unit's `PATH` does not
 include `~/.local/bin`, where `claude` lives. Every pane died instantly while
 `tmux new-session` had already returned 0, so the run logged five successes with
-nothing running. `claude-crew` hardens `PATH` itself and ends with a
+nothing running. `claude-host` hardens `PATH` itself and ends with a
 `verify: N/N sessions hold a live claude` line, exit 4 if any is dead.
 
 **Never `pgrep -f` on a pattern that could be in your own command line.** It
 matches the flattened command line, so `--resume <id>` also matches the shell
 that invoked you. It killed a live session twice during development, and using
 it for launch verification means the check can pass while nothing started —
-the exact failure the check exists to catch. `claude-crew` reads argv from
+the exact failure the check exists to catch. `claude-host` reads argv from
 `/proc` for processes inside its own panes.
 
 **`send-keys` returning 0 is not delivery.** It means tmux accepted the

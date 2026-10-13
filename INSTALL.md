@@ -1,4 +1,4 @@
-# Installing claude-crew
+# Installing claude-host
 
 These steps work for a person at a terminal and for an AI agent running shell
 commands. Each step says how to check it worked. An agent should run the check
@@ -21,28 +21,28 @@ The rest runs without it.
 ## 1. Get the files
 
 ```sh
-git clone https://github.com/A-Eugene/claude-crew.git /tmp/claude-crew
+git clone https://github.com/A-Eugene/claude-host.git /tmp/claude-host
 mkdir -p ~/.claude/skills
 rsync -a --exclude=.git --exclude=crew.conf --exclude=sessions.state --exclude=slots.state \
-  /tmp/claude-crew/ ~/.claude/skills/claude-crew/
-chmod +x ~/.claude/skills/claude-crew/bin/claude-crew ~/.claude/skills/claude-crew/hooks/*.sh
-ln -sf ~/.claude/skills/claude-crew/bin/claude-crew /usr/local/bin/claude-crew
+  /tmp/claude-host/ ~/.claude/skills/claude-host/
+chmod +x ~/.claude/skills/claude-host/bin/claude-host ~/.claude/skills/claude-host/hooks/*.sh
+ln -sf ~/.claude/skills/claude-host/bin/claude-host /usr/local/bin/claude-host
 ```
 
 Without root, link into `~/.local/bin` instead, and make sure it is on `PATH`.
 
-Check: `claude-crew --help` prints the command list.
+Check: `claude-host --help` prints the command list.
 
-The directory must be `~/.claude/skills/claude-crew`. Claude Code finds the skill
+The directory must be `~/.claude/skills/claude-host`. Claude Code finds the skill
 there, and the hooks and the web page locate the CLI relative to it.
 
 ## 2. Write the config
 
 ```sh
-claude-crew setup
+claude-host setup
 ```
 
-This writes `~/.claude/skills/claude-crew/crew.conf` with the defaults:
+This writes `~/.claude/skills/claude-host/crew.conf` with the defaults:
 
 | Key | Default |
 |---|---|
@@ -59,13 +59,13 @@ transcript store the crew reads. Set it now if your sessions should start
 somewhere else:
 
 ```sh
-claude-crew setup --workdir /path/to/work --model claude-opus-5-5 --effort high
+claude-host setup --workdir /path/to/work --model claude-opus-5-5 --effort high
 ```
 
 The crew refuses to change `WORKDIR` later while a session is running or saved,
 because a conversation resumes only from the directory it started in.
 
-Check: `claude-crew status` prints the sessions header and "(none running)".
+Check: `claude-host status` prints the sessions header and "(none running)".
 
 ## 3. Register the hooks
 
@@ -80,14 +80,14 @@ settings and hooks.
       {
         "matcher": "Edit|Write|Bash",
         "hooks": [{ "type": "command",
-                    "command": "~/.claude/skills/claude-crew/hooks/local-skills-guard.sh" }]
+                    "command": "~/.claude/skills/claude-host/hooks/local-skills-guard.sh" }]
       }
     ],
     "SessionStart": [
       {
         "matcher": "clear",
         "hooks": [{ "type": "command",
-                    "command": "~/.claude/skills/claude-crew/bin/claude-crew cleared" }]
+                    "command": "~/.claude/skills/claude-host/bin/claude-host cleared" }]
       }
     ]
   }
@@ -101,7 +101,7 @@ settings and hooks.
   settings, commands, agents and MCP servers, which crew sessions do not run.
   README.md's "Using it as intended" explains where each kind of configuration
   belongs.
-- **`claude-crew cleared`**: Claude Code's `/clear` keeps the previous
+- **`claude-host cleared`**: Claude Code's `/clear` keeps the previous
   conversation under the same name. The hook records the new conversation as
   the session's, and has the session ask before the previous one is deleted. To
   name the web page in that notice, prefix the command with
@@ -113,21 +113,21 @@ appear in it. Sessions pick the hooks up when they next start.
 ## 4. Start sessions
 
 ```sh
-claude-crew new "Notes"                 # a brand new conversation
-claude-crew resume "trading research"   # a conversation you already have
-claude-crew status
-claude-crew boot on     # optional: bring the running set back after a reboot
+claude-host new "Notes"                 # a brand new conversation
+claude-host resume "trading research"   # a conversation you already have
+claude-host status
+claude-host boot on     # optional: bring the running set back after a reboot
 ```
 
 Every start and stop updates the saved set, so `start` and `restart` bring back
 what was running.
 
-Check: `claude-crew status` lists each started conversation. Attach to one with
+Check: `claude-host status` lists each started conversation. Attach to one with
 `tmux attach -t Claude_<short id>` (`tmux ls` shows the names), and leave
 with `Ctrl-b d`.
 
 A host that ran an earlier version with numbered `Claude1`, `Claude2` …
-sessions renames them with `claude-crew migrate`. The sessions keep running.
+sessions renames them with `claude-host migrate`. The sessions keep running.
 
 ## 5. The web page (optional)
 
@@ -135,9 +135,9 @@ The page runs every command as a button. It listens on `127.0.0.1:3115` and
 needs a reverse proxy with HTTPS in front of it.
 
 ```sh
-python3 ~/.claude/skills/claude-crew/web/server.py set-password
-cp ~/.claude/skills/claude-crew/web/claude-crew-web.service /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now claude-crew-web
+python3 ~/.claude/skills/claude-host/web/server.py set-password
+cp ~/.claude/skills/claude-host/web/claude-host-web.service /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now claude-host-web
 ```
 
 Check: `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3115/api/state`
@@ -151,8 +151,8 @@ name:
 
 ```sh
 certbot certonly --nginx -d crew.example.com
-sed 's/crew.example.com/<your host>/g' ~/.claude/skills/claude-crew/web/nginx.conf \
-  > /etc/nginx/conf.d/claude-crew-web.conf
+sed 's/crew.example.com/<your host>/g' ~/.claude/skills/claude-host/web/nginx.conf \
+  > /etc/nginx/conf.d/claude-host-web.conf
 nginx -t && systemctl reload nginx
 ```
 
@@ -165,10 +165,10 @@ Check: the host name shows a password field, and a wrong password is refused.
 ## Updating
 
 ```sh
-git -C /tmp/claude-crew pull
+git -C /tmp/claude-host pull
 rsync -a --exclude=.git --exclude=crew.conf --exclude=sessions.state --exclude=slots.state \
-  /tmp/claude-crew/ ~/.claude/skills/claude-crew/
-systemctl restart claude-crew-web    # only if the web page is installed
+  /tmp/claude-host/ ~/.claude/skills/claude-host/
+systemctl restart claude-host-web    # only if the web page is installed
 ```
 
 `crew.conf` and `sessions.state` hold your settings and saved sessions. The
@@ -176,7 +176,7 @@ excludes keep them. Never copy over them.
 
 ## Rules for an AI agent doing this
 
-- Run `claude-crew start --restart`, `restart` and `stop` only when asked. Each one
+- Run `claude-host start --restart`, `restart` and `stop` only when asked. Each one
   stops running sessions, and one of them may be your own.
 - Never run `tmux kill-server`. It ends every tmux session on the machine,
   including the one you are running in.
