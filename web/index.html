@@ -152,6 +152,8 @@ input[type=password], textarea {
 }
 input[type=password] { height: 40px; }
 textarea { min-height: 120px; resize: vertical; }
+.prefixed { display: flex; align-items: center; gap: 8px; }
+.prefixed span { flex: none; color: var(--text-2); }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
 [hidden] { display: none !important; }
 </style>
@@ -463,7 +465,8 @@ function newSession() {
       el("h3", {}, "New Session"),
       lowMemory(),
       el("form", { onsubmit: go, style: "display:grid;gap:16px" },
-        el("div", { class: "field" }, el("label", { for: "newTitle" }, "Title"), input),
+        el("div", { class: "field" }, el("label", { for: "newTitle" }, "Title"),
+          S.defaults.title_prefix ? el("div", { class: "prefixed" }, el("span", { class: "mono", translate: "no" }, S.defaults.title_prefix), input) : input),
         el("p", {}, "It follows the defaults. Change its model or effort later from inside the session."),
         el("div", { class: "foot" },
           el("button", { class: "ghost", type: "button", onclick: close }, "Cancel"),

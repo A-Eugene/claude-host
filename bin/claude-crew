@@ -106,6 +106,9 @@ SHELL_CMD=bash
 # resuming a real conversation (two processes on one transcript interleave
 # writes and corrupt it).
 CLAUDE_BIN=claude
+# Put in front of every title that `new` and `rename` set, so sessions from
+# several machines stay apart in one list. Empty means no prefix.
+TITLE_PREFIX=""
 
 CONF_KEYS=(WORKDIR MODEL EFFORT PERMISSION_MODE AUTOCOMPACT TMUX_PREFIX SHELL_CMD CLAUDE_BIN)
 
@@ -134,6 +137,12 @@ load_conf() {
     [ -n "${!k:-}" ] || die "crew.conf is missing $k — run: claude-crew setup"
   done
   command -v "$CLAUDE_BIN" >/dev/null || die "claude binary not found: $CLAUDE_BIN (PATH=$PATH)"
+}
+
+# A title with TITLE_PREFIX in front, unless it already starts with it.
+with_prefix() {
+  if [ -z "$TITLE_PREFIX" ]; then printf '%s' "$1"; return; fi
+  case "$1" in "$TITLE_PREFIX"*) printf '%s' "$1" ;; *) printf '%s %s' "$TITLE_PREFIX" "$1" ;; esac
 }
 
 # Transcript store for a working directory. Claude Code encodes the cwd by
@@ -996,6 +1005,7 @@ cmd_setup() {
       --permission-mode) PERMISSION_MODE="$2"; shift 2 ;;
       --autocompact)     AUTOCOMPACT="$2"; shift 2 ;;
       --tmux-prefix)     TMUX_PREFIX="$2"; shift 2 ;;
+      --title-prefix)    TITLE_PREFIX="$2"; shift 2 ;;
       --shell)           SHELL_CMD="$2"; shift 2 ;;
       --claude-bin)      CLAUDE_BIN="$2"; shift 2 ;;
       -h|--help)
@@ -1012,6 +1022,7 @@ cmd_setup() {
   # claude rejects a bad value at launch, which would leave every pane at a bare shell.
   [[ "$AUTOCOMPACT" =~ ^(auto|[0-9]+[kKmM]?)$ ]] || die "setup: --autocompact must be auto or a size from 100k to 1M"
   [[ "$TMUX_PREFIX" =~ ^[A-Za-z][A-Za-z0-9]*$ ]] || die "setup: --tmux-prefix must be letters and digits"
+  case "$TITLE_PREFIX" in *$'\n'*|*$'\r'*|*$'\t'*) die "setup: --title-prefix is one line with no tab" ;; esac
 
   # Transcripts are stored per working directory, and claude resumes a
   # conversation only from the directory it was started in. A session running
@@ -1031,6 +1042,7 @@ cmd_setup() {
     echo "# Regenerate or patch with: claude-crew setup --model sonnet --effort high"
     local k
     for k in "${CONF_KEYS[@]}"; do printf '%s=%q\n' "$k" "${!k}"; done
+    printf 'TITLE_PREFIX=%q\n' "$TITLE_PREFIX"
   } > "$CONF"
 
   local pd; pd=$(projdir)
@@ -1072,9 +1084,9 @@ cmd_status_json() {
   if [ -f "${CREW_UNIT_DIR:-/etc/systemd/system}/claude-crew.service" ]; then boot=on; fi
   for d in ${DUPES[@]+"${DUPES[@]}"}; do dupes+="$d"$'\n'; done
   SESS_TSV="$tsv" SAVED_TSV="$saved" CONVS_TSV="$convs" DUPES_TXT="$dupes" python3 - \
-    "$MODEL" "$EFFORT" "$AUTOCOMPACT" "$PERMISSION_MODE" "$boot" "$WORKDIR" <<'PY2'
+    "$MODEL" "$EFFORT" "$AUTOCOMPACT" "$PERMISSION_MODE" "$boot" "$WORKDIR" "$TITLE_PREFIX" <<'PY2'
 import json, os, sys
-model, effort, ac, pm, boot, workdir = sys.argv[1:7]
+model, effort, ac, pm, boot, workdir, title_prefix = sys.argv[1:8]
 mem = None
 try:
     for line in open("/proc/meminfo"):
@@ -1083,7 +1095,8 @@ try:
 except OSError:
     pass
 out = {"defaults": {"model": model, "effort": effort,
-                    "autocompact": ac, "permission_mode": pm, "workdir": workdir},
+                    "autocompact": ac, "permission_mode": pm, "workdir": workdir,
+                    "title_prefix": title_prefix},
        "boot": boot, "memory_available_mb": mem,
        "sessions": [], "saved_stopped": [], "conversations": [], "duplicates": []}
 for line in os.environ["SESS_TSV"].splitlines():
@@ -1347,7 +1360,8 @@ cmd_restart() {
 # (--session-id), so the session is named before claude starts.
 cmd_new() {
   [ $# -eq 1 ] && [ -n "$1" ] || die 'new: usage: claude-crew new "<title>"'
-  local title="$1" id s pid
+  local title id s pid
+  title=$(with_prefix "$1")
   id=$(new_uuid); s=$(sess_of_conv "$id")
   start_claude_in "$s" "$id" "$title" "" "" new
   echo "started \"$title\" in $s"
@@ -1738,7 +1752,7 @@ cmd_prompt() {
 # window label and the saved set follow either way.
 cmd_rename() {
   [ $# -eq 2 ] && [ -n "$2" ] || die 'rename: usage: claude-crew rename <conversation> "<new title>"'
-  local new="$2"
+  local new; new=$(with_prefix "$2")
   case "$new" in *$'\n'*|*$'\r'*) die "rename: a title is one line" ;; esac
   scan_sessions
   detect_self

@@ -52,6 +52,7 @@ This writes `~/.claude/skills/claude-crew/crew.conf` with the defaults:
 | `PERMISSION_MODE` | `auto` |
 | `AUTOCOMPACT` | `auto` |
 | `TMUX_PREFIX` | `Claude` |
+| `TITLE_PREFIX` | empty |
 
 `WORKDIR` is the directory every session starts in, and it decides which
 transcript store the crew reads. Set it now if your sessions should start

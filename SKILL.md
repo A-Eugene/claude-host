@@ -357,6 +357,7 @@ safe to edit by hand.
 | `PERMISSION_MODE` | `auto` | |
 | `AUTOCOMPACT` | `auto` | Passed as `--autocompact`: `auto`, or a window from 100k to 1M tokens. |
 | `TMUX_PREFIX` | `Claude` | Sessions are named `Claude_<short id>`. Letters and digits only. |
+| `TITLE_PREFIX` | empty | Put in front of every title that `new` and `rename` set, such as `[VPS]`, so sessions from several machines stay apart in one list. A name typed without it still matches. Set it with `setup --title-prefix "[VPS]"`. |
 | `SHELL_CMD` | `bash` | The pane process. |
 | `CLAUDE_BIN` | `claude` | A testing seam. Point it at a stub to exercise the tmux mechanics without resuming a real conversation. |
 

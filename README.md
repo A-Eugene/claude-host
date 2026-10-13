@@ -9,6 +9,9 @@ end up managing them by hand: which tmux window holds which conversation, how to
 restart them all without killing the one you are typing in, how to bring a
 stopped one back on the model it used. `claude-crew` does that.
 
+It is built for a machine with no desktop, such as a server, where Claude Code
+runs in a terminal and tmux is what keeps a conversation alive.
+
 ```
 claude-crew setup
 claude-crew resume "trading research"
@@ -333,6 +336,7 @@ outside the repository. Setting a new password signs every browser out.
 | `PERMISSION_MODE` | `auto` | |
 | `AUTOCOMPACT` | `auto` | Passed as `--autocompact`: `auto`, or a window from 100k to 1M tokens. |
 | `TMUX_PREFIX` | `Claude` | Sessions are named `Claude_<short id>`. Letters and digits only. |
+| `TITLE_PREFIX` | empty | Put in front of every title that `new` and `rename` set, such as `[VPS]`, so sessions from several machines stay apart in one list. A name typed without it still matches. Set it with `setup --title-prefix "[VPS]"`. |
 | `SHELL_CMD` | `bash` | The pane process. |
 | `CLAUDE_BIN` | `claude` | A testing seam. Point it at a stub to exercise the tmux mechanics without resuming a real conversation. |
 
