@@ -997,6 +997,7 @@ cmd_setup() {
   [ -f "$CONF" ] && { # shellcheck disable=SC1090
     source "$CONF"; }
   local old_workdir; old_workdir=$(cd "$WORKDIR" 2>/dev/null && pwd || printf '%s' "$WORKDIR")
+  local old_prefix="$TITLE_PREFIX"
   while [ $# -gt 0 ]; do
     case "$1" in
       --workdir)         WORKDIR="$2"; shift 2 ;;
@@ -1050,6 +1051,41 @@ cmd_setup() {
   sed 's/^/  /' "$CONF" | grep -v '^  #'
   echo "  transcripts: $pd"
   [ -d "$pd" ] || echo "  WARNING: that transcript directory does not exist yet" >&2
+  [ "$TITLE_PREFIX" = "$old_prefix" ] || retitle_all "$old_prefix"
+}
+
+# TITLE_PREFIX changed from $1. Retitle every running session, every saved
+# session, and every stopped conversation whose title starts with $1. A session
+# that cannot take /rename right now keeps its title and is named in the output.
+retitle_all() {
+  local old="$1" id title base new ids="" renamed=0 left=0 out
+  scan_sessions; detect_self; state_read
+  for id in ${!SESS_OF_CONV[@]} ${ST_ORDER[@]+"${ST_ORDER[@]}"}; do ids+="$id"$'\n'; done
+  if [ -n "$old" ]; then
+    while IFS=$'\t' read -r id title; do
+      case "$title" in "$old"*) ids+="$id"$'\n' ;; esac
+    done < <(list_convs 60)
+  fi
+  while read -r id; do
+    [ -n "$id" ] || continue
+    title=$(conv_title "$id"); [ -n "$title" ] || continue
+    base=$title
+    if [ -n "$old" ]; then
+      case "$title" in "$old "*) base=${title#"$old "} ;; "$old"*) base=${title#"$old"} ;; esac
+    fi
+    new=$(with_prefix "$base")
+    [ "$new" != "$title" ] || continue
+    if [ -n "$SELF_SESS" ] && [ "${SESS_OF_CONV[$id]:-}" = "$SELF_SESS" ]; then
+      echo "not renamed: \"$title\" is the session you are running in. Type: /rename $new"
+      left=$((left + 1)); continue
+    fi
+    if out=$( (cmd_rename "$id" "$new") 2>&1 ); then
+      renamed=$((renamed + 1)); echo "$out"
+    else
+      left=$((left + 1)); echo "not renamed: \"$title\": $(printf '%s' "$out" | head -1)"
+    fi
+  done < <(printf '%s' "$ids" | sort -u)
+  echo "prefix: renamed $renamed, left $left"
 }
 
 # Machine-readable status for the web page. One JSON object on stdout.

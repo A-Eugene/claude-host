@@ -193,6 +193,11 @@ def defaults_args(a):
         if not WORKDIR_RE.match(w):
             return None, "The working directory is an absolute path, such as /home/you."
         args += ["--workdir", w]
+    if a.get("title_prefix") is not None:
+        p = str(a["title_prefix"]).strip()
+        if len(p) > 40 or any(ord(c) < 32 for c in p):
+            return None, "The title prefix is one line of at most 40 characters."
+        args += ["--title-prefix", p]
     if not args:
         return None, "Nothing to change."
     return args, None
@@ -239,7 +244,7 @@ def run_action(a):
         args, err = defaults_args(a)
         if err:
             return 400, err, None
-        return (*run("setup", *args), "Defaults saved.")
+        return (*run("setup", *args, timeout=600), "Defaults saved.")
     if op == "boot" and a.get("value") in ("on", "off"):
         return (*run("boot", a["value"]), "Starts on boot." if a["value"] == "on" else "Does not start on boot.")
     if op == "start":

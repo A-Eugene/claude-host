@@ -72,7 +72,7 @@ Run it as `claude-host <command>`, or `crew` for short. Both are on `PATH` via
 | `claude-host migrate` | Rename numbered `Claude1`, `Claude2` … sessions after the conversation each runs, without stopping them. |
 
 The same commands are buttons on the web page in `web/`, served on this host at
-`https://crew.aeugene.top`. The README has its install.
+`https://ch.aeugene.top`. The README has its install.
 
 `<target>` is a running session: its tmux name, its conversation id or the
 first 8 or more characters of one, or a loose match on its title.

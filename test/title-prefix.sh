@@ -21,4 +21,23 @@ mkdir -p "$tmp/bin" "$tmp/work"; cp "$crew" "$tmp/bin/"
 "$tmp/bin/$(basename "$crew")" setup --title-prefix $'a\tb' >/dev/null 2>&1 && fail "a tab in the prefix was accepted"
 "$tmp/bin/$(basename "$crew")" setup >/dev/null 2>&1 || fail "setup with no flags failed"
 ( source "$tmp/crew.conf"; [ "$TITLE_PREFIX" = "[LAB]" ] ) || fail "a bare setup dropped the prefix"
+
+# A changed prefix retitles running, saved and matching stopped conversations.
+source <(sed -n '/^retitle_all() {/,/^}/p' "$crew")
+declare -A SESS_OF_CONV=([run1]=S1 [self]=S2) TITLES=([run1]="[VPS] Alpha" [self]="[VPS] Me" [saved1]="Beta" [stop1]="[VPS] Gamma" [busy]="[VPS] Busy")
+ST_ORDER=(saved1 busy); SELF_SESS=S2
+scan_sessions() { :; }; detect_self() { :; }; state_read() { :; }
+list_convs() { printf '%s\t%s\n' stop1 "[VPS] Gamma" other "Unrelated"; }
+conv_title() { printf '%s' "${TITLES[$1]:-}"; }
+cmd_rename() { [ "$1" = busy ] && { echo "crew: busy" >&2; exit 1; }; echo "renamed $1 to $2"; }
+TITLE_PREFIX="[LAB]"; out=$(retitle_all "[VPS]")
+grep -q 'renamed run1 to \[LAB\] Alpha' <<<"$out" || fail "running session: $out"
+grep -q 'renamed saved1 to \[LAB\] Beta' <<<"$out" || fail "saved session without the earlier prefix: $out"
+grep -q 'renamed stop1 to \[LAB\] Gamma' <<<"$out" || fail "stopped conversation: $out"
+grep -q 'other' <<<"$out" && fail "an unrelated conversation was renamed"
+grep -q 'not renamed: "\[VPS\] Me" is the session you are running in. Type: /rename \[LAB\] Me' <<<"$out" || fail "own session: $out"
+grep -q 'not renamed: "\[VPS\] Busy": crew: busy' <<<"$out" || fail "busy session: $out"
+grep -q 'prefix: renamed 3, left 2' <<<"$out" || fail "count: $out"
+TITLE_PREFIX=""; SELF_SESS=""; out=$(retitle_all "[VPS]")
+grep -q 'renamed run1 to Alpha' <<<"$out" || fail "clearing the prefix: $out"
 echo "ok"
