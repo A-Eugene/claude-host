@@ -9,11 +9,11 @@ description: >-
   box. Load it whenever the user mentions the claudes, the crew, a session, or
   names another session at all, even without saying "claude-host" and even when
   the request looks like ordinary shell work. Triggers: crew, claude-host,
-  restart the claudes, new claude session, resume Click Clack, stop Pensi,
-  clear context, /clear, delete a conversation, what is running, change
-  Trading Research 2 to sonnet, bump effort to xhigh, update claude code,
-  prompt this to Trading Research 1, send this to another session, unstick a
-  stuck session. Load it also before ANY tmux command that kills, stops or
+  restart the claudes, new claude session, resume a conversation by its title,
+  stop a session by its title, clear context, /clear, delete a conversation,
+  what is running, change a session to sonnet, bump effort to xhigh, update
+  claude code, prompt this to another session, send this to another session,
+  unstick a stuck session. Load it also before ANY tmux command that kills, stops or
   restarts something: `tmux kill-server` ends every session on this host,
   including your own.
 
@@ -31,10 +31,10 @@ description: >-
 `claude-host` runs each Claude Code conversation on this host as its own tmux
 session, and starts, stops, restarts and clears them.
 
-Run it as `claude-host <command>`, or `crew` for short. Both are on `PATH` via
-`/root/Scripts/`. The Bash tool's `PATH` does not always include
-`/root/Scripts`, so call it by full path when a bare `claude-host` fails:
-`/root/.claude/skills/claude-host/bin/claude-host`.
+Run it as `~/.claude/skills/claude-host/bin/claude-host <command>`. Where the
+install linked it onto `PATH` as `claude-host`, or `crew` for short, the bare
+name works in a login shell. A tool-call shell does not always inherit that
+`PATH`, so use the full path when a bare `claude-host` fails.
 
 ## The model
 
@@ -71,8 +71,8 @@ Run it as `claude-host <command>`, or `crew` for short. Both are on `PATH` via
 | `claude-host relabel` | Rename sessions and windows to match the conversation each runs. |
 | `claude-host migrate` | Rename numbered `Claude1`, `Claude2` … sessions after the conversation each runs, without stopping them. |
 
-The same commands are buttons on the web page in `web/`, served on this host at
-`https://ch.aeugene.top`. The README has its install.
+The same commands are buttons on the web page in `web/`, at the address in
+`CREW_WEB_URL` when one is set up. The README has its install.
 
 `<target>` is a running session: its tmux name, its conversation id or the
 first 8 or more characters of one, or a loose match on its title.
@@ -177,6 +177,13 @@ session touches that folder, and refuses the first write there until they are
 read. When it refuses, read what it lists, then retry. Read a project's skills as
 plain files. The Skill tool cannot see them.
 
+**Without the hook,** nothing names them. Check whether `local-skills-guard.sh`
+is registered in `~/.claude/settings.json`. If it is not, do its work yourself:
+before the first write in a folder below `WORKDIR`, read every `CLAUDE.md` and
+`AGENTS.md` from that folder up to `WORKDIR`, and list the skills in each
+`.claude/skills/` and `.agents/skills/` on the way. Read the ones that cover
+what you are about to change.
+
 Project hooks, settings, permissions, commands, agents and MCP servers never run
 in crew sessions. When the hook names some, tell the user. When asked to add a
 rule or check for one project, write a global hook in `~/.claude/settings.json`
@@ -190,7 +197,7 @@ either one.
 
 - **Claude Code's `/clear`** starts a new conversation in the same process and
   keeps the old one on disk under the same title, so the store gets two
-  conversations with one name. The user does not use it.
+  conversations with one name.
 - **`claude-host clear`** starts a new, empty conversation in its own session
   with the same title, model and effort, then DELETES the conversation it
   replaced, its sidecar and its uploads. There is no backup.
@@ -211,7 +218,9 @@ your own session, `clear` defers onto a timer, like every other stop path.
 has already renamed the session after the new conversation, saved it, and put a
 notice in your context. Tell the user the previous conversation still exists
 under the same name, and ask before deleting it with
-`claude-host delete <id> --yes`.
+`claude-host delete <id> --yes`. If no such notice arrived, the hook is not
+installed: run `claude-host status`, which flags a session whose name has
+drifted, and `claude-host relabel` to fix the names.
 
 ## Deleting a conversation
 
