@@ -11,7 +11,7 @@
 # only after the edit is issued. This hook fires before the tool runs, which is
 # the only point where a version-matched skill still helps.
 #
-# Fires once per session per folder, so a nested CLAUDE.md is named the first
+# Fires once per session, and once per subagent, per folder, so a nested CLAUDE.md is named the first
 # time the session reaches its folder. A non-mutating touch gets context. The
 # first mutating one is denied, so the read happens before the code.
 #
@@ -40,8 +40,24 @@ except OSError:
 
 tool = d.get("tool_name", "")
 ti = d.get("tool_input") or {}
-sid = re.sub(r"[^A-Za-z0-9_-]", "", d.get("session_id") or "nosession")
+# A subagent shares its parent's session_id but starts with none of what the
+# parent read, so it keeps markers of its own.
+sid = re.sub(r"[^A-Za-z0-9_-]", "", (d.get("session_id") or "nosession") + "_" + (d.get("agent_id") or ""))
 cwd = os.path.realpath(d.get("cwd") or workdir)
+
+
+def start_dir():
+    """The folder the session started in. cwd follows every cd, but Claude Code
+    loads instructions only from the starting folder, which names the
+    transcript's project folder."""
+    encoded = os.path.basename(os.path.dirname(d.get("transcript_path") or ""))
+    p = cwd
+    while True:
+        if re.sub(r"[^A-Za-z0-9]", "-", p) == encoded:
+            return p
+        if p == "/":
+            return workdir
+        p = os.path.dirname(p)
 cmd = ti.get("command") or ""
 
 paths = [p for p in (ti.get("file_path"), ti.get("notebook_path")) if p]
@@ -106,7 +122,8 @@ def context_dirs(path):
 dirs = next((c for c in map(context_dirs, paths) if c), [])
 # A session started inside a folder already has that folder's skills and
 # instructions, and those of every folder above it.
-dirs = [d for d in dirs if not inside(cwd, d)]
+started = start_dir()
+dirs = [d for d in dirs if not inside(started, d)]
 if not dirs:
     sys.exit(0)
 
